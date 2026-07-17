@@ -1,0 +1,157 @@
+@import url('https://fonts.googleapis.com/css2?family=Kanit:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Kanit", sans-serif;
+}
+
+html, body, #root {
+  background-color: #0C0C0C;
+  font-family: 'Kanit', sans-serif;
+  color: #D7E2EA;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  /* iOS momentum scrolling */
+  -webkit-overflow-scrolling: touch;
+}
+
+* , *::before, *::after {
+  box-sizing: border-box;
+  /* Prevent tap highlight flash on iOS */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent horizontal overflow globally */
+body {
+  overflow-x: hidden;
+  /* Smooth scroll for all browsers */
+  scroll-behavior: smooth;
+}
+
+/* ----- Hero Heading Gradient ----- */
+/* Cross-browser gradient text — works on Chrome, Firefox, Safari, iOS Safari */
+.hero-heading {
+  background: linear-gradient(180deg, #FFEDD5 0%, #F97316 60%, #C2410C 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent; /* Firefox fallback */
+}
+
+/* 3D Card Flip Utilities */
+.perspective-1000 {
+  -webkit-perspective: 1000px;
+  perspective: 1000px;
+}
+.preserve-3d {
+  -webkit-transform-style: preserve-3d;
+  transform-style: preserve-3d;
+}
+.backface-hidden {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+.rotate-y-180 {
+  -webkit-transform: rotateY(180deg);
+  transform: rotateY(180deg);
+}
+
+/* Custom scrollbar to match the premium feel — desktop only */
+@media (hover: hover) {
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #0C0C0C;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #252627;
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #3a3b3c;
+  }
+}
+
+/* Hide standard cursor when custom cursor is active — desktop only */
+@media (hover: hover) and (pointer: fine) {
+  .custom-cursor-active,
+  .custom-cursor-active *,
+  .custom-cursor-active button,
+  .custom-cursor-active a,
+  .custom-cursor-active [role="button"],
+  .custom-cursor-active input,
+  .custom-cursor-active textarea,
+  .custom-cursor-active select,
+  .custom-cursor-active iframe {
+    cursor: none !important;
+  }
+}
+
+/* iOS safe area padding for full-bleed sections */
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Ensure images never break layout */
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* Smooth transitions on focusable elements for mobile */
+button, a, input, textarea, select {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* Showcase image placeholder fallback */
+.img-placeholder {
+  background: linear-gradient(135deg, #1a1a1a 0%, #222222 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Fix for iOS Safari viewport height (100vh issue) */
+.h-screen-safe {
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* Marquee animation keyframes for client ticker */
+@keyframes partnersMarqueeLeft {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-50%, 0, 0); }
+}
+@keyframes partnersMarqueeRight {
+  0% { transform: translate3d(-50%, 0, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+.animate-partners-left {
+  display: flex;
+  width: max-content;
+  animation: partnersMarqueeLeft 28s linear infinite;
+}
+.animate-partners-right {
+  display: flex;
+  width: max-content;
+  animation: partnersMarqueeRight 28s linear infinite;
+}
+
+/* Reduced motion accessibility */
+@media (prefers-reduced-motion: reduce) {
+  .animate-partners-left,
+  .animate-partners-right {
+    animation: none;
+  }
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
