@@ -126,6 +126,8 @@ export default function ServicesSection() {
   });
   // Detect if device uses hover (desktop mouse) or tap (mobile/touch)
   const [isHoverDevice, setIsHoverDevice] = useState(false);
+  const [isAutoPlay, setIsAutoPlay] = useState(true);
+  const autoPlayTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
   
   React.useEffect(() => {
     const mq = window.matchMedia('(hover: hover) and (pointer: fine)');
@@ -134,6 +136,55 @@ export default function ServicesSection() {
     mq.addEventListener?.('change', handler);
     return () => mq.removeEventListener?.('change', handler);
   }, []);
+
+  // Clean up autoPlay timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (autoPlayTimeoutRef.current) {
+        clearTimeout(autoPlayTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Auto-flip cycle for mobile/touch devices
+  React.useEffect(() => {
+    if (isHoverDevice) return; // Use normal hover on desktop
+    if (!isAutoPlay) return;
+
+    const interval = setInterval(() => {
+      setFlippedService((current) => {
+        const nextIndex = current 
+          ? (SERVICES.findIndex((s) => s.number === current) + 1) % SERVICES.length
+          : 0;
+        return SERVICES[nextIndex].number;
+      });
+    }, 4500); // 4.5 seconds per card is perfect reading speed for highlights
+
+    return () => clearInterval(interval);
+  }, [isHoverDevice, isAutoPlay]);
+
+  // Helper to trigger manual interaction and pause autoplay
+  const handleCardClick = (serviceNumber: string) => {
+    // Toggle card flip
+    if (flippedService === serviceNumber) {
+      setFlippedService(null);
+    } else {
+      setFlippedService(serviceNumber);
+    }
+
+    // Pause autoplay
+    setIsAutoPlay(false);
+
+    // Clear previous pause timeout
+    if (autoPlayTimeoutRef.current) {
+      clearTimeout(autoPlayTimeoutRef.current);
+    }
+
+    // Resume autoplay after 12 seconds of inactivity
+    autoPlayTimeoutRef.current = setTimeout(() => {
+      setIsAutoPlay(true);
+    }, 12000);
+  };
 
   const handleOpenQuoteModal = (service: ServiceItem) => {
     setSelectedQuoteService(service);
@@ -203,9 +254,7 @@ export default function ServicesSection() {
                 {/* 3D Flip Horizontal Container — tap on mobile, hover on desktop */}
                 <div 
                   onClick={() => {
-                    // On touch/mobile: toggle flip on every tap
-                    // On desktop: clicking also works as a toggle override
-                    setFlippedService(flippedService === service.number ? null : service.number);
+                    handleCardClick(service.number);
                   }}
                   className="w-full h-auto min-h-[220px] sm:min-h-[160px] md:h-[140px] perspective-1000 group cursor-pointer"
                 >

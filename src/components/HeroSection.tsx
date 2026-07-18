@@ -123,24 +123,36 @@ export default function HeroSection() {
       {/* 4. Hero Portrait (Centered absolutely with Magnet) */}
       <div className="absolute left-1/2 -translate-x-1/2 z-10 w-[240px] sm:w-[300px] md:w-[350px] lg:w-[390px] xl:w-[420px] top-1/2 -translate-y-1/2 sm:top-auto sm:translate-y-0 sm:bottom-0 pointer-events-auto">
         <FadeIn delay={0.6} y={30} duration={1.0}>
-          <Magnet
-            padding={150}
-            strength={3}
-            activeTransition="transform 0.3s ease-out"
-            inactiveTransition="transform 0.6s ease-in-out"
-            className="w-full cursor-grab active:cursor-grabbing"
+          <motion.div
+            animate={{
+              y: [0, -12, 0],
+            }}
+            transition={{
+              repeat: Infinity,
+              duration: 5,
+              ease: 'easeInOut',
+            }}
+            className="w-full"
           >
-            <div className="w-full aspect-[3/4] overflow-hidden rounded-t-[5rem] sm:rounded-t-[7rem] md:rounded-t-[8rem] rounded-b-[1.5rem] border border-orange-500/60 shadow-[0_0_35px_rgba(249,115,22,0.4),0_30px_60px_rgba(0,0,0,0.85)] bg-[#111] relative">
-              <img
-                src={RoboImage}
-                alt="Orange Quantum Hub AI Robo Companion"
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-cover select-none pointer-events-none filter contrast-[1.15] brightness-[1.1] saturate-[1.1]"
-              />
-              {/* Subtle orange vignette overlay for premium depth */}
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0C0C0C]/60 via-transparent to-transparent pointer-events-none" />
-            </div>
-          </Magnet>
+            <Magnet
+              padding={150}
+              strength={3}
+              activeTransition="transform 0.3s ease-out"
+              inactiveTransition="transform 0.6s ease-in-out"
+              className="w-full cursor-grab active:cursor-grabbing"
+            >
+              <div className="w-full aspect-[3/4] overflow-hidden rounded-t-[5rem] sm:rounded-t-[7rem] md:rounded-t-[8rem] rounded-b-[1.5rem] border border-orange-500/60 shadow-[0_0_35px_rgba(249,115,22,0.4),0_30px_60px_rgba(0,0,0,0.85)] bg-[#111] relative">
+                <img
+                  src={RoboImage}
+                  alt="Orange Quantum Hub AI Robo Companion"
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover select-none pointer-events-none filter contrast-[1.15] brightness-[1.1] saturate-[1.1]"
+                />
+                {/* Subtle orange vignette overlay for premium depth */}
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0C0C0C]/60 via-transparent to-transparent pointer-events-none" />
+              </div>
+            </Magnet>
+          </motion.div>
         </FadeIn>
       </div>
 

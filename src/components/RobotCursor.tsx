@@ -70,8 +70,8 @@ export default function RobotCursor() {
     const checkPointer = () => {
       const hasFinePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
       setIsFinePointer(hasFinePointer);
+      setIsVisible(true); // Always visible: cursor companion on desktop, floating interactive widget on mobile!
       if (hasFinePointer) {
-        setIsVisible(true);
         document.documentElement.classList.add('custom-cursor-active');
       } else {
         document.documentElement.classList.remove('custom-cursor-active');
@@ -165,8 +165,49 @@ export default function RobotCursor() {
     return () => observer.disconnect();
   }, []);
 
-  // Only render on fine pointer (mouse) devices
-  if (!isFinePointer || !isVisible) return null;
+  // Handle tap / click events on mobile for fun easter egg reactions!
+  const handleMobileTap = () => {
+    if (isFinePointer) return;
+    setIsHovered(true);
+
+    const mobileMessages: Record<string, string[]> = {
+      'hero-section': ['OQH ASSISTANT HUD! 🤖', 'DRAG ME AROUND! 💫', 'LETS DEFINE THE FUTURE! ✨', 'TAP TO PLAY! 🎮'],
+      'about-section': ['OUR LEADERSHIP FORCE! 🚀', 'PATHAN AZAM KHAN ✨', 'ACCELERATING GROWTH! ⚡'],
+      'services-section': ['SERVICES SLIDESHOW ACTIVE! 💻', 'WE ARE EXPERTS! 🧠', 'WANT A FREE QUOTE? 💰'],
+      'projects-section': ['BUILT TO PERFECTION! 🎨', 'EXPLORE OUR SYSTEMS! 📂', 'HIGH-PERFORMANCE TECH! ⚡'],
+      'contact-section': ['SAY HELLO! 📞', 'LET\'S WORK TOGETHER! 🤝', 'WHATSAPP ACTIVE! 💬'],
+    };
+
+    const messages = mobileMessages[activeSection] || ['HELLO USER! 👋'];
+    const randomMsg = messages[Math.floor(Math.random() * messages.length)];
+    setHoverText(randomMsg);
+
+    // Clear and restore original bubble status after 3.5 seconds
+    const t = setTimeout(() => {
+      setIsHovered(false);
+      setHoverText('');
+    }, 3500);
+
+    return () => clearTimeout(t);
+  };
+
+  // Helper to determine what text to display in the speech bubble
+  const getDisplayBubbleText = () => {
+    if (hoverText) return hoverText;
+    
+    // Ambient messages based on section
+    switch (activeSection) {
+      case 'hero-section': return 'WELCOME 👋';
+      case 'about-section': return 'ABOUT US 🚀';
+      case 'services-section': return 'SERVICES 💻';
+      case 'projects-section': return 'PORTFOLIO ✨';
+      case 'contact-section': return 'SAY HELLO! 📞';
+      default: return 'OQH ASSISTANT 🤖';
+    }
+  };
+
+  // Skip rendering if not initialized yet
+  if (!isVisible) return null;
 
   // Active theme configuration
   const currentTheme = SECTION_THEMES[activeSection] || SECTION_THEMES['hero-section'];
@@ -241,95 +282,127 @@ export default function RobotCursor() {
     }
   };
 
-  return (
-    <motion.div
-      style={{
-        x: springX,
-        y: springY,
-        translateX: '-50%',
-        translateY: '-50%',
-      }}
-      className="fixed top-0 left-0 z-[9999] pointer-events-none select-none flex flex-col items-center gap-2"
-    >
-      {/* 1. Interactive Tooltip Bubble */}
-      <motion.div
-        animate={{
-          scale: isHovered ? 1 : 0,
-          opacity: isHovered ? 1 : 0,
-          y: isHovered ? 0 : 10,
-        }}
-        transition={{ type: 'spring', damping: 15, stiffness: 300 }}
-        className="bg-[#141414] border px-3 py-1.5 rounded-xl flex items-center justify-center gap-1.5 shadow-[0_10px_20px_rgba(0,0,0,0.4)] whitespace-nowrap"
-        style={{ borderColor: color }}
-      >
-        <span className="w-1.5 h-1.5 rounded-full animate-ping" style={{ backgroundColor: color }} />
-        <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-white">
-          {hoverText || 'HELLO!'}
-        </span>
-      </motion.div>
-
-      {/* 2. Main Robot Companion Head */}
-      <div className="relative">
-        {/* Soft atmospheric backing glow */}
-        <div
-          className="absolute inset-[-12px] rounded-full blur-[24px] opacity-60 transition-colors duration-500"
-          style={{ backgroundColor: currentTheme.glowColor }}
-        />
-
-        {/* Small floating antenna */}
+  const renderCompanionBody = () => {
+    return (
+      <>
+        {/* 1. Interactive Tooltip Bubble */}
         <motion.div
           animate={{
-            y: [0, -3, 0],
-            rotate: isHovered ? [0, 10, -10, 0] : [0, 2, -2, 0],
+            scale: (isHovered || !isFinePointer) ? 1 : 0,
+            opacity: (isHovered || !isFinePointer) ? 1 : 0,
+            y: (isHovered || !isFinePointer) ? 0 : 10,
           }}
-          transition={{
-            repeat: Infinity,
-            duration: isHovered ? 1.2 : 3,
-            ease: 'easeInOut',
-          }}
-          className="absolute left-1/2 -top-5 -translate-x-1/2 flex flex-col items-center z-20"
+          transition={{ type: 'spring', damping: 15, stiffness: 300 }}
+          className="bg-[#141414]/95 backdrop-blur-md border px-3 py-1.5 rounded-xl flex items-center justify-center gap-1.5 shadow-[0_10px_20px_rgba(0,0,0,0.4)] whitespace-nowrap"
+          style={{ borderColor: color }}
         >
-          {/* Antenna tip LED node */}
-          <div
-            className="w-2.5 h-2.5 rounded-full shadow-[0_0_8px_currentcolor] transition-colors duration-500"
-            style={{ backgroundColor: color, color: color }}
-          />
-          {/* Antenna stem */}
-          <div className="w-[2px] h-3 bg-zinc-600" />
+          <span className="w-1.5 h-1.5 rounded-full animate-ping" style={{ backgroundColor: color }} />
+          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-white">
+            {getDisplayBubbleText()}
+          </span>
         </motion.div>
 
-        {/* Outer Robotic Face Armor (Chassis) */}
-        <div
-          className={`relative w-[60px] h-[48px] bg-zinc-950/90 border border-white/10 backdrop-blur-md p-1.5 flex flex-col items-center justify-center shadow-2xl z-10 transition-all duration-500 overflow-hidden ${currentTheme.shapeClass}`}
-        >
-          {/* Subtle grid mesh overlay on the visor screen */}
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:3px_3px] pointer-events-none" />
+        {/* 2. Main Robot Companion Head */}
+        <div className="relative">
+          {/* Soft atmospheric backing glow */}
+          <div
+            className="absolute inset-[-12px] rounded-full blur-[24px] opacity-60 transition-colors duration-500"
+            style={{ backgroundColor: currentTheme.glowColor }}
+          />
 
-          {/* Glowing visor screen */}
-          <div className="relative w-full h-full bg-black/60 rounded-lg border border-white/5 flex flex-col items-center justify-center px-1">
-            {/* Render dynamically morphing eyes */}
-            <div className="flex items-center justify-center">
-              {renderEyes()}
+          {/* Small floating antenna */}
+          <motion.div
+            animate={{
+              y: [0, -3, 0],
+              rotate: isHovered ? [0, 10, -10, 0] : [0, 2, -2, 0],
+            }}
+            transition={{
+              repeat: Infinity,
+              duration: isHovered ? 1.2 : 3,
+              ease: 'easeInOut',
+            }}
+            className="absolute left-1/2 -top-5 -translate-x-1/2 flex flex-col items-center z-20"
+          >
+            {/* Antenna tip LED node */}
+            <div
+              className="w-2.5 h-2.5 rounded-full shadow-[0_0_8px_currentcolor] transition-colors duration-500"
+              style={{ backgroundColor: color, color: color }}
+            />
+            {/* Antenna stem */}
+            <div className="w-[2px] h-3 bg-zinc-600" />
+          </motion.div>
+
+          {/* Outer Robotic Face Armor (Chassis) */}
+          <div
+            className={`relative w-[60px] h-[48px] bg-zinc-950/90 border border-white/10 backdrop-blur-md p-1.5 flex flex-col items-center justify-center shadow-2xl z-10 transition-all duration-500 overflow-hidden ${currentTheme.shapeClass}`}
+          >
+            {/* Subtle grid mesh overlay on the visor screen */}
+            <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:3px_3px] pointer-events-none" />
+
+            {/* Glowing visor screen */}
+            <div className="relative w-full h-full bg-black/60 rounded-lg border border-white/5 flex flex-col items-center justify-center px-1">
+              {/* Render dynamically morphing eyes */}
+              <div className="flex items-center justify-center">
+                {renderEyes()}
+              </div>
+
+              {/* Glowing dashboard name (micro details) */}
+              <span
+                className="text-[5px] font-mono font-bold tracking-widest uppercase mt-0.5 opacity-65 scale-90 transition-colors duration-500"
+                style={{ color }}
+              >
+                {currentTheme.name}
+              </span>
             </div>
+          </div>
 
-            {/* Glowing dashboard name (micro details) */}
-            <span
-              className="text-[5px] font-mono font-bold tracking-widest uppercase mt-0.5 opacity-65 scale-90 transition-colors duration-500"
-              style={{ color }}
-            >
-              {currentTheme.name}
-            </span>
+          {/* Left & Right Cybernetic Ear Nodes */}
+          <div className="absolute -left-1.5 top-1/2 -translate-y-1/2 flex flex-col gap-1 z-0">
+            <div className="w-[3px] h-3 bg-zinc-700 rounded-l" />
+          </div>
+          <div className="absolute -right-1.5 top-1/2 -translate-y-1/2 flex flex-col gap-1 z-0">
+            <div className="w-[3px] h-3 bg-zinc-700 rounded-r" />
           </div>
         </div>
+      </>
+    );
+  };
 
-        {/* Left & Right Cybernetic Ear Nodes */}
-        <div className="absolute -left-1.5 top-1/2 -translate-y-1/2 flex flex-col gap-1 z-0">
-          <div className="w-[3px] h-3 bg-zinc-700 rounded-l" />
-        </div>
-        <div className="absolute -right-1.5 top-1/2 -translate-y-1/2 flex flex-col gap-1 z-0">
-          <div className="w-[3px] h-3 bg-zinc-700 rounded-r" />
-        </div>
-      </div>
-    </motion.div>
-  );
+  if (isFinePointer) {
+    return (
+      <motion.div
+        style={{
+          x: springX,
+          y: springY,
+          translateX: '-50%',
+          translateY: '-50%',
+        }}
+        className="fixed top-0 left-0 z-[9999] pointer-events-none select-none flex flex-col items-center gap-2"
+      >
+        {renderCompanionBody()}
+      </motion.div>
+    );
+  } else {
+    return (
+      <motion.div
+        drag
+        dragElastic={0.15}
+        dragConstraints={{ left: -150, right: 20, top: -450, bottom: 20 }}
+        onClick={handleMobileTap}
+        animate={{
+          y: [0, -8, 0]
+        }}
+        transition={{
+          y: {
+            repeat: Infinity,
+            duration: 3.5,
+            ease: 'easeInOut',
+          }
+        }}
+        className="fixed bottom-28 right-6 z-[9999] pointer-events-auto select-none flex flex-col items-center gap-2 cursor-grab active:cursor-grabbing bg-transparent"
+      >
+        {renderCompanionBody()}
+      </motion.div>
+    );
+  }
 }
