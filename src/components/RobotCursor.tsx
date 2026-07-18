@@ -61,20 +61,23 @@ export default function RobotCursor() {
   // Only show cursor companion on devices with a fine pointer (mouse/trackpad) — not on touch screens
   const [isFinePointer, setIsFinePointer] = useState(false);
 
-  // Mouse Tracking
+  // Mouse & Touch Tracking
   const mouseX = useMotionValue(-100);
   const mouseY = useMotionValue(-100);
 
-  // Detect fine pointer (mouse) vs coarse pointer (touch) on mount
+  // Detect fine pointer (mouse) vs coarse pointer (touch) on mount and initialize position
   useEffect(() => {
     const checkPointer = () => {
       const hasFinePointer = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
       setIsFinePointer(hasFinePointer);
-      setIsVisible(true); // Always visible: cursor companion on desktop, floating interactive widget on mobile!
+      setIsVisible(true);
       if (hasFinePointer) {
         document.documentElement.classList.add('custom-cursor-active');
       } else {
         document.documentElement.classList.remove('custom-cursor-active');
+        // Initialize robot position dynamically at a beautiful lower-right corner on mobile screens
+        mouseX.set(window.innerWidth - 75);
+        mouseY.set(window.innerHeight - 150);
       }
     };
     checkPointer();
@@ -82,20 +85,24 @@ export default function RobotCursor() {
     const mq = window.matchMedia('(hover: hover) and (pointer: fine)');
     mq.addEventListener?.('change', checkPointer);
     return () => mq.removeEventListener?.('change', checkPointer);
-  }, []);
+  }, [mouseX, mouseY]);
 
   // Smooth springs for gliding "floaty" companion feel
   const springX = useSpring(mouseX, { damping: 30, stiffness: 180, mass: 0.6 });
   const springY = useSpring(mouseY, { damping: 30, stiffness: 180, mass: 0.6 });
 
-  // Mouse position tracking — desktop/mouse only (component skips render on touch devices)
+  // Position tracking for mouse on desktop and touch gestures on mobile/tablet
   useEffect(() => {
-    if (!isFinePointer) return;
-
     const updatePosition = (clientX: number, clientY: number) => {
-      // Offset cursor to upper-left of actual pointer tip
-      mouseX.set(clientX + 16);
-      mouseY.set(clientY + 16);
+      if (isFinePointer) {
+        // Offset cursor slightly on desktop
+        mouseX.set(clientX + 16);
+        mouseY.set(clientY + 16);
+      } else {
+        // Offset Y coordinates upwards on mobile so the user's finger never blocks the robot or text bubble!
+        mouseX.set(clientX);
+        mouseY.set(clientY - 75);
+      }
     };
 
     const checkInteractiveTarget = (target: HTMLElement | null) => {
@@ -128,14 +135,45 @@ export default function RobotCursor() {
     const handleMouseOver = (e: MouseEvent) => checkInteractiveTarget(e.target as HTMLElement);
     const handleMouseOut = () => { setIsHovered(false); setHoverText(''); };
 
-    window.addEventListener('mousemove', handleMouseMove, { passive: true });
-    document.addEventListener('mouseover', handleMouseOver);
-    document.addEventListener('mouseout', handleMouseOut);
+    // Dynamic finger tracking on mobile / tablet touch move
+    const handleTouchMove = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      if (touch) {
+        updatePosition(touch.clientX, touch.clientY);
+        // Probe interactive elements under the current touch point
+        const element = document.elementFromPoint(touch.clientX, touch.clientY);
+        if (element) {
+          checkInteractiveTarget(element as HTMLElement);
+        }
+      }
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      if (touch) {
+        updatePosition(touch.clientX, touch.clientY);
+      }
+    };
+
+    if (isFinePointer) {
+      window.addEventListener('mousemove', handleMouseMove, { passive: true });
+      document.addEventListener('mouseover', handleMouseOver);
+      document.addEventListener('mouseout', handleMouseOut);
+    } else {
+      // Mobile touch screen listeners
+      window.addEventListener('touchmove', handleTouchMove, { passive: true });
+      window.addEventListener('touchstart', handleTouchStart, { passive: true });
+    }
 
     return () => {
-      window.removeEventListener('mousemove', handleMouseMove);
-      document.removeEventListener('mouseover', handleMouseOver);
-      document.removeEventListener('mouseout', handleMouseOut);
+      if (isFinePointer) {
+        window.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseover', handleMouseOver);
+        document.removeEventListener('mouseout', handleMouseOut);
+      } else {
+        window.removeEventListener('touchmove', handleTouchMove);
+        window.removeEventListener('touchstart', handleTouchStart);
+      }
     };
   }, [mouseX, mouseY, isFinePointer]);
 
@@ -368,41 +406,30 @@ export default function RobotCursor() {
     );
   };
 
-  if (isFinePointer) {
-    return (
+  return (
+    <motion.div
+      style={{
+        x: springX,
+        y: springY,
+        translateX: '-50%',
+        translateY: '-50%',
+      }}
+      className="fixed top-0 left-0 z-[9999] pointer-events-none select-none flex flex-col items-center gap-2"
+    >
+      {/* Dynamic continuous float animation */}
       <motion.div
-        style={{
-          x: springX,
-          y: springY,
-          translateX: '-50%',
-          translateY: '-50%',
-        }}
-        className="fixed top-0 left-0 z-[9999] pointer-events-none select-none flex flex-col items-center gap-2"
-      >
-        {renderCompanionBody()}
-      </motion.div>
-    );
-  } else {
-    return (
-      <motion.div
-        drag
-        dragElastic={0.15}
-        dragConstraints={{ left: -150, right: 20, top: -450, bottom: 20 }}
-        onClick={handleMobileTap}
         animate={{
-          y: [0, -8, 0]
+          y: [0, -6, 0],
         }}
         transition={{
-          y: {
-            repeat: Infinity,
-            duration: 3.5,
-            ease: 'easeInOut',
-          }
+          repeat: Infinity,
+          duration: 4,
+          ease: 'easeInOut',
         }}
-        className="fixed bottom-28 right-6 z-[9999] pointer-events-auto select-none flex flex-col items-center gap-2 cursor-grab active:cursor-grabbing bg-transparent"
+        className="flex flex-col items-center gap-2"
       >
         {renderCompanionBody()}
       </motion.div>
-    );
-  }
+    </motion.div>
+  );
 }

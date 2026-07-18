@@ -146,22 +146,55 @@ export default function ServicesSection() {
     };
   }, []);
 
-  // Auto-flip cycle for mobile/touch devices
+  // Auto-flip cycle & dynamic Touch Hover finger tracking for mobile/touch devices
   React.useEffect(() => {
     if (isHoverDevice) return; // Use normal hover on desktop
-    if (!isAutoPlay) return;
 
-    const interval = setInterval(() => {
-      setFlippedService((current) => {
-        const nextIndex = current 
-          ? (SERVICES.findIndex((s) => s.number === current) + 1) % SERVICES.length
-          : 0;
-        return SERVICES[nextIndex].number;
-      });
-    }, 4500); // 4.5 seconds per card is perfect reading speed for highlights
+    // 1. Setup Touch Hover Swipe Tracking
+    const handleTouchMove = (e: TouchEvent) => {
+      const touch = e.touches[0];
+      if (!touch) return;
+      
+      const element = document.elementFromPoint(touch.clientX, touch.clientY);
+      if (!element) return;
+      
+      const cardElement = element.closest('[data-service-number]');
+      if (cardElement) {
+        const serviceNum = cardElement.getAttribute('data-service-number');
+        if (serviceNum && serviceNum !== flippedService) {
+          setFlippedService(serviceNum);
+          setIsAutoPlay(false); // Pause autoplay when they actively touch/drag
+        }
+      }
+    };
 
-    return () => clearInterval(interval);
-  }, [isHoverDevice, isAutoPlay]);
+    const sectionEl = document.getElementById('services-section');
+    if (sectionEl) {
+      sectionEl.addEventListener('touchmove', handleTouchMove, { passive: true });
+      sectionEl.addEventListener('touchstart', handleTouchMove, { passive: true });
+    }
+
+    // 2. Setup Ambient Autoplay Loop when not actively touched
+    let interval: NodeJS.Timeout | null = null;
+    if (isAutoPlay) {
+      interval = setInterval(() => {
+        setFlippedService((current) => {
+          const nextIndex = current 
+            ? (SERVICES.findIndex((s) => s.number === current) + 1) % SERVICES.length
+            : 0;
+          return SERVICES[nextIndex].number;
+        });
+      }, 4500); // 4.5s autoplay rotation
+    }
+
+    return () => {
+      if (sectionEl) {
+        sectionEl.removeEventListener('touchmove', handleTouchMove);
+        sectionEl.removeEventListener('touchstart', handleTouchMove);
+      }
+      if (interval) clearInterval(interval);
+    };
+  }, [isHoverDevice, isAutoPlay, flippedService]);
 
   // Helper to trigger manual interaction and pause autoplay
   const handleCardClick = (serviceNumber: string) => {
@@ -256,7 +289,8 @@ export default function ServicesSection() {
                   onClick={() => {
                     handleCardClick(service.number);
                   }}
-                  className="w-full h-auto min-h-[220px] sm:min-h-[160px] md:h-[140px] perspective-1000 group cursor-pointer"
+                  data-service-number={service.number}
+                  className="w-full h-[255px] sm:h-[175px] md:h-[145px] perspective-1000 group cursor-pointer"
                 >
                   <div className={`relative w-full h-full duration-700 preserve-3d transition-transform ${flippedService === service.number ? '[transform:rotateY(180deg)]' : (isHoverDevice ? 'md:group-hover:[transform:rotateY(180deg)]' : '')}`}>
                     

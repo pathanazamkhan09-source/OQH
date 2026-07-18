@@ -143,6 +143,16 @@ button, a, input, textarea, select {
   animation: partnersMarqueeRight 28s linear infinite;
 }
 
+/* Ambient soft floating keyframes */
+@keyframes ambientFloat {
+  0% { transform: translate3d(0, 0px, 0); }
+  50% { transform: translate3d(0, -12px, 0); }
+  100% { transform: translate3d(0, 0px, 0); }
+}
+.animate-ambient-float {
+  animation: ambientFloat 5s ease-in-out infinite;
+}
+
 /* Reduced motion accessibility */
 @media (prefers-reduced-motion: reduce) {
   .animate-partners-left,

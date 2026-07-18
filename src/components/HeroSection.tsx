@@ -123,17 +123,7 @@ export default function HeroSection() {
       {/* 4. Hero Portrait (Centered absolutely with Magnet) */}
       <div className="absolute left-1/2 -translate-x-1/2 z-10 w-[240px] sm:w-[300px] md:w-[350px] lg:w-[390px] xl:w-[420px] top-1/2 -translate-y-1/2 sm:top-auto sm:translate-y-0 sm:bottom-0 pointer-events-auto">
         <FadeIn delay={0.6} y={30} duration={1.0}>
-          <motion.div
-            animate={{
-              y: [0, -12, 0],
-            }}
-            transition={{
-              repeat: Infinity,
-              duration: 5,
-              ease: 'easeInOut',
-            }}
-            className="w-full"
-          >
+          <div className="w-full animate-ambient-float">
             <Magnet
               padding={150}
               strength={3}
@@ -152,7 +142,7 @@ export default function HeroSection() {
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0C0C0C]/60 via-transparent to-transparent pointer-events-none" />
               </div>
             </Magnet>
-          </motion.div>
+          </div>
         </FadeIn>
       </div>
 
